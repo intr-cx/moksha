@@ -1,5 +1,6 @@
 #include "tui.h"
 #include "irc.h"
+#include <stdbool.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +17,11 @@ void tuiInit(void) {
   noecho();
   cbreak();
   keypad(w, true);
+  start_color();
+  uint x, y;
+  x = y = 0;
+  getmaxyx(w, y, x);
+	move(y - 2, cursor + 1);
 }
 
 void tuiLoop(void) {
@@ -121,27 +127,41 @@ void tuiDrawChannel(IrcServer *server, IrcChannel *channel) {
   addstr(line);
   while (i < channel->lenMsgs && y - i > 4) {
     IrcMsg m = channel->msgs[channel->lenMsgs - 1 - i];
+    uint t = ceil((double)strlen(m.msg) / (double)(x - (WID + 3)));
     s = 0;
     while (s < WID - 1 && m.ident[s] != 0)
       s++;
-    move(y - i - 4, WID - s - 1);
+    move(y - i - t - 4, WID - s - 1);
     uint u;
     for (u = 0; u < s && m.ident[u] != 0; u++)
       addch(m.ident[u]);
-    move(y - i - 4, WID);
+    move(y - i - t - 4, WID);
     addch(m.sep);
-    /* i += ceil((double)strlen(&m.msg[u]) / (double)(x - WID + 3)); */
-    i++;
+    i += t;
   }
   i = 0;
   s = WID + 3;
-  while (i < channel->lenMsgs && y - i > 4) {
+  while (i < channel->lenMsgs && y - i - 4 >= 0) {
     IrcMsg m = channel->msgs[channel->lenMsgs - 1 - i];
-    move(y - i - 4, WID + 3);
-    for (uint u = 0; m.msg[u] != 0 && u < 512; u++)
-      addch(m.msg[u]);
-    i++;
+    uint msgwid = ceil((double)strlen(m.msg) / (double)(x - s));
+		i += msgwid;
+		for (int t = msgwid; t >= 0; t--) {
+			if (y - i - t - 4 < 0)
+				break;
+			for (uint u = 0; u < (x - s); u++) {
+				uint mindex = u + (t * (x - s));
+				if (mindex >= LEN_MSG || m.msg[mindex] == 0)
+					break;
+				move(y - (i - t) - 4, s + u - 1);
+				if (m.msg[mindex] > 30)
+					addch(m.msg[mindex]);
+				else {
+					// TODO colors & attributes
+				}
+			}
+		}
   }
+	move(y - 2, cursor + 1);
   refresh();
 }
 
