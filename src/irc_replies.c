@@ -172,12 +172,14 @@ void ircRpl(IrcServer *s, char *buf, size_t len) {
     argc++;
   }
 
+	pthread_mutex_lock(&mutex);
   if (isNumeric(args[1], 3))
     ircHandleReplyNum(s, args, argc); // irc_numerics.h
   else
     ircHandleReplyCmd(s, args, argc);
 
-  tuiDrawChannel(s, &s->channels[s->curChannel]);
+  draw();
+  pthread_mutex_unlock(&mutex);
 }
 
 void fillUser(IrcUser *u, char *nick, char *user, char *name, char *mode,
@@ -210,8 +212,9 @@ void ircRplPrivmsg(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
   IrcChannel *c;
   if (strcmp(args[2], server->me.nick) == 0) {
     c = getChannelFromStr(server, u.nick);
-    if (NULL == c)
+    if (NULL == c) {
       c = ircServerAddChannel(server, u.nick);
+		}
   } else {
     c = getChannelFromStr(server, args[2]);
   }

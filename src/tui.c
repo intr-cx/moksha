@@ -1,16 +1,19 @@
 #include "tui.h"
 #include "irc.h"
-#include <stdbool.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define WID 16
-
 char input[512];
 uint cursor = 0;
 WINDOW *w;
+
+void tuiDrawList(uint sep, uint height);
+void tuiDrawChannel(IrcServer *, IrcChannel *, uint sep, uint width,
+                    uint height);
+void tuiDrawCmd(uint width, uint height);
 
 void tuiInit(void) {
   w = initscr();
@@ -21,15 +24,12 @@ void tuiInit(void) {
   uint x, y;
   x = y = 0;
   getmaxyx(w, y, x);
-	move(y - 2, cursor + 1);
+  move(y - 2, cursor + 1);
 }
 
 void tuiLoop(void) {
   int c;
-  uint x, y;
-  x = y = 0;
-  getmaxyx(w, y, x);
-  while ((c = wgetch(w)) != 0) {
+  while ((c = getch()) != 0) {
     pthread_mutex_lock(&mutex);
     move(0, 0);
     char wht[8];
@@ -40,11 +40,10 @@ void tuiLoop(void) {
       if (NULL != servers) {
         if (servers[curServer].curChannel > 0)
           servers[curServer].curChannel--;
-        else if (curServer > 0)
+        else if (curServer > 0) {
           curServer--;
-        tuiDrawChannel(
-            &servers[curServer],
-            &servers[curServer].channels[servers[curServer].curChannel]);
+          servers[curServer].curChannel = servers[curServer].lenChannels - 1;
+        }
       }
       break;
     }
@@ -52,24 +51,22 @@ void tuiLoop(void) {
       if (NULL != servers) {
         if (servers[curServer].curChannel < servers[curServer].lenChannels - 1)
           servers[curServer].curChannel++;
-        else if (curServer < lenServers - 1)
+        else if (curServer < lenServers - 1) {
           curServer++;
-        tuiDrawChannel(
-            &servers[curServer],
-            &servers[curServer].channels[servers[curServer].curChannel]);
+          servers[curServer].curChannel = 0;
+        }
       }
       break;
     }
     case 10: {
       if (cursor != 0) {
         IrcServer *s = NULL == servers ? NULL : &servers[curServer];
-        IrcChannel *ch = NULL == servers || s->lenChannels == 0 ? NULL : &s->channels[s->curChannel];
+        IrcChannel *ch = NULL == servers || s->lenChannels == 0
+                             ? NULL
+                             : &s->channels[s->curChannel];
         ircChannelSendMsg(s, ch, input);
         memset(input, 0, 512);
         cursor = 0;
-        move(y - 2, 1);
-        for (uint i = 0; i < x && i < 512; i++)
-          delch();
       }
       break;
     }
@@ -77,8 +74,6 @@ void tuiLoop(void) {
     case 23: {
       while (input[cursor] != ' ' && cursor > 0) {
         input[--cursor] = 0;
-        move(y - 2, cursor + 1);
-        delch();
       }
       break;
     }
@@ -86,8 +81,6 @@ void tuiLoop(void) {
       if (cursor == 0)
         break;
       input[--cursor] = 0;
-      move(y - 2, cursor + 1);
-      delch();
       break;
     }
     default: {
@@ -98,71 +91,110 @@ void tuiLoop(void) {
       break;
     }
     }
-    move(y - 2, 1);
-    for (uint i = 0; i < x && i < 512; i++) {
-      if (input[i] == 0)
-        break;
-      addch(input[i]);
-    }
-    refresh();
+    draw();
     pthread_mutex_unlock(&mutex);
   }
 }
 
-void tuiDrawList(void) {}
+void draw(void) {
+  uint sep = 16;
 
-void tuiDrawChannel(IrcServer *server, IrcChannel *channel) {
-  if (NULL == server || NULL == channel)
-    return;
-
+  uint width, height;
+  width = height = 0;
+  getmaxyx(w, height, width);
   clear();
-  uint x, y;
-  x = y = 0;
-  getmaxyx(w, y, x);
+  tuiDrawList(sep, height);
+
+  if (NULL != servers && NULL != servers[curServer].channels) {
+    tuiDrawChannel(&servers[curServer],
+                   &servers[curServer].channels[servers[curServer].curChannel],
+                   sep, width, height);
+  }
+	tuiDrawCmd(width, height);
+
+  refresh();
+}
+
+void tuiDrawList(uint sep, uint height) {
+  uint c = 0;
+  for (uint i = 0; i < lenServers && i < height; i++) {
+    if (curServer == i) {
+      move(i + c, 0);
+      addch('>');
+    }
+    IrcServer *s = &servers[i];
+    for (uint k = 0; k < sep && s->host[k] != 0; k++) {
+      move(i + c, k + 1);
+      addch(s->host[k]);
+    }
+    for (uint j = 0; j < s->lenChannels && j < height; j++) {
+      IrcChannel *ch = &s->channels[j];
+      if (curServer == i && s->curChannel == j) {
+        move(i + j + c + 1, 0);
+        addch('*');
+      }
+      for (uint k = 0; k < sep && ch->name[k] != 0; k++) {
+        move(i + j + c + 1, k + 1);
+        addch(ch->name[k]);
+      }
+    }
+    c += s->lenChannels;
+  }
+}
+
+void tuiDrawCmd(uint width, uint height) {
+  for (uint u = 0; u < width; u++) {
+    move(height - 2, u + 1);
+    addch(input[u] == 0 ? ' ' : input[u]);
+  }
+  move(height - 2, cursor + 1);
+}
+
+void tuiDrawChannel(IrcServer *server, IrcChannel *channel, uint sep,
+                    uint width, uint height) {
+  const uint nicksep = 16;
+  width -= sep;
   uint i = 0, s = 0;
-  move(y - 3, 1);
+  move(height - 3, 1);
   char line[254] = {0};
   snprintf(line, 254, "%s / %s - %s", server->host, channel->name,
            server->me.nick);
   addstr(line);
-  while (i < channel->lenMsgs && y - i > 4) {
+  while (i < channel->lenMsgs && height - i > 4) {
     IrcMsg m = channel->msgs[channel->lenMsgs - 1 - i];
-    uint t = ceil((double)strlen(m.msg) / (double)(x - (WID + 3)));
+    uint t = ceil((double)strlen(m.msg) / (double)(width - (nicksep + 3)));
     s = 0;
-    while (s < WID - 1 && m.ident[s] != 0)
+    while (s < nicksep - 1 && m.ident[s] != 0)
       s++;
-    move(y - i - t - 4, WID - s - 1);
+    move(height - i - t - 4, nicksep - s - 1 + sep);
     uint u;
     for (u = 0; u < s && m.ident[u] != 0; u++)
       addch(m.ident[u]);
-    move(y - i - t - 4, WID);
+    move(height - i - t - 4, nicksep + sep);
     addch(m.sep);
     i += t;
   }
   i = 0;
-  s = WID + 3;
-  while (i < channel->lenMsgs && y - i - 4 >= 0) {
+  s = nicksep + 3;
+  while (i < channel->lenMsgs) {
     IrcMsg m = channel->msgs[channel->lenMsgs - 1 - i];
-    uint msgwid = ceil((double)strlen(m.msg) / (double)(x - s));
-		i += msgwid;
-		for (int t = msgwid; t >= 0; t--) {
-			if (y - i - t - 4 < 0)
-				break;
-			for (uint u = 0; u < (x - s); u++) {
-				uint mindex = u + (t * (x - s));
-				if (mindex >= LEN_MSG || m.msg[mindex] == 0)
-					break;
-				move(y - (i - t) - 4, s + u - 1);
-				if (m.msg[mindex] > 30)
-					addch(m.msg[mindex]);
-				else {
-					// TODO colors & attributes
-				}
-			}
-		}
+    uint msgwid = ceil((double)strlen(m.msg) / (double)(width - s));
+    i += msgwid;
+    for (int t = msgwid; t >= 0; t--) {
+      for (uint u = 0; u < (width - s); u++) {
+        uint mindex = u + (t * (width - s));
+        if (mindex >= LEN_MSG || m.msg[mindex] == 0)
+          break;
+        move(height - (i - t) - 4, s + u - 1 + sep);
+        if (m.msg[mindex] > 30)
+          addch(m.msg[mindex]);
+        else {
+          // TODO colors & attributes
+        }
+      }
+    }
   }
-	move(y - 2, cursor + 1);
-  refresh();
+  move(height - 2, cursor + 1);
 }
 
 void tuiDeinit(void) { endwin(); }

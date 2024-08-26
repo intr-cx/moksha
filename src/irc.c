@@ -354,7 +354,7 @@ void ircChannelSendMsg(IrcServer *server, IrcChannel *channel, char *message) {
     IrcServer *s = &servers[curServer];
     IrcChannel *c = &s->channels[s->curChannel];
     if (s->host == server->host && c->name == channel->name)
-      tuiDrawChannel(s, c);
+			draw();
   }
 }
 

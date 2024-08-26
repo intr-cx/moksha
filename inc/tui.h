@@ -8,7 +8,6 @@ void tuiInit(void);
 void tuiLoop(void);
 void tuiDeinit(void);
 
-void tuiDrawList(void);
-void tuiDrawChannel(IrcServer *, IrcChannel *);
+void draw(void);
 
 #endif // INCLUDE_INC_TUI_H_
