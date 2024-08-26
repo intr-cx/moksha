@@ -186,11 +186,11 @@ void ircRpl(IrcServer *s, char *buf, size_t len) {
 
 void fillUser(IrcUser *u, char *nick, char *user, char *name, char *mode,
               char *host) {
-  strlcpy(u->nick, nick, 64);
-  strlcpy(u->user, user, 64);
-  strlcpy(u->name, name, 64);
-  strlcpy(u->mode, mode, 64);
-  strlcpy(u->host, host, 64);
+  strlcpy(u->nick, nick, LEN_NICK);
+  strlcpy(u->user, user, LEN_NICK);
+  strlcpy(u->name, name, LEN_NICK);
+  strlcpy(u->mode, mode, LEN_MODE);
+  strlcpy(u->host, host, LEN_NICK);
 }
 
 void ircRplNotice(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
