@@ -31,7 +31,6 @@ typedef struct IrcUser {
   char user[LEN_NICK];
   char name[LEN_NICK];
   char host[LEN_NICK];
-  /* struct sockaddr_in host; */
 } IrcUser;
 
 typedef struct IrcChannel {

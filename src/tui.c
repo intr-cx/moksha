@@ -115,8 +115,8 @@ void tuiDrawChannel(IrcServer *server, IrcChannel *channel) {
   getmaxyx(w, y, x);
   uint i = 0, s = 0;
   move(y - 3, 1);
-  char line[128] = {0};
-  snprintf(line, 127, "%s / %s - %s", server->host, channel->name,
+  char line[254] = {0};
+  snprintf(line, 254, "%s / %s - %s", server->host, channel->name,
            server->me.nick);
   addstr(line);
   while (i < channel->lenMsgs && y - i > 4) {

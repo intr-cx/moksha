@@ -172,16 +172,12 @@ void ircRpl(IrcServer *s, char *buf, size_t len) {
     argc++;
   }
 
-  /* pthread_mutex_lock(&mutex); */
-  // the command
   if (isNumeric(args[1], 3))
     ircHandleReplyNum(s, args, argc); // irc_numerics.h
   else
     ircHandleReplyCmd(s, args, argc);
 
   tuiDrawChannel(s, &s->channels[s->curChannel]);
-
-  /* pthread_mutex_unlock(&mutex); */
 }
 
 void fillUser(IrcUser *u, char *nick, char *user, char *name, char *mode,
