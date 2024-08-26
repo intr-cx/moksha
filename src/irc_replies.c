@@ -224,6 +224,7 @@ void ircRplPrivmsg(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
 
 void ircRplJoin(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
+  (void) argc;
   IrcUser u = {0};
   createUserFromStr(&u, args[0], LEN_PROTMSG);
   if (strcmp(u.user, server->me.user) == 0) {
@@ -237,6 +238,7 @@ void ircRplJoin(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
 
 void ircRplPart(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
+  (void) argc;
   IrcUser u = {0};
   createUserFromStr(&u, args[0], LEN_PROTMSG);
   if (strcmp(u.user, server->me.user) == 0) {
@@ -250,11 +252,14 @@ void ircRplPart(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
 
 void ircRplPing(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
+  (void) argc;
   ircCmdSvPong(server, args[2], NULL);
 }
 
 void ircRplPong(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
+  (void) argc;
+  (void) args;
   struct timespec t = {0};
   clock_gettime(CLOCK_MONOTONIC, &t);
   server->pong = t.tv_nsec;
@@ -262,6 +267,7 @@ void ircRplPong(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
 
 void ircRplNick(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
+  (void) argc;
   IrcUser u = {0};
   createUserFromStr(&u, args[0], LEN_PROTMSG);
   if (strcmp(u.user, server->me.user) != 0) {
@@ -279,6 +285,7 @@ void ircRplNick(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
 
 void ircRplTopic(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                  size_t argc) {
+  (void) argc;
   IrcChannel *channel = getChannelFromStr(server, args[3]);
   if (NULL == channel)
     return;
@@ -287,6 +294,7 @@ void ircRplTopic(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
 
 void ircRplQuit(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
+  (void) argc;
   IrcUser u = {0};
   createUserFromStr(&u, args[0], LEN_PROTMSG);
   if (strcmp(u.user, server->me.user) != 0) {
