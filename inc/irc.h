@@ -71,7 +71,7 @@ IrcUser *getUserFromStr(IrcChannel *, char *);
 
 ulong getServerPing(IrcServer *);
 
-void ircConnect(IrcServer *);
+int ircConnect(IrcServer *);
 void ircDisconnect(IrcServer *, char *reason);
 
 void *ircThreadRecv(void *);

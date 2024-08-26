@@ -133,10 +133,10 @@ ulong getServerPing(IrcServer *server) {
   return round(1E-4 * (server->pong - server->ping));
 }
 
-void ircConnect(IrcServer *server) {
+int ircConnect(IrcServer *server) {
   server->sockfd = initSocket(&server->addr);
   if (server->sockfd < 0)
-    return;
+    return -1;
 
   pthread_mutex_init(&mutex, NULL);
 
@@ -145,7 +145,11 @@ void ircConnect(IrcServer *server) {
 
   ircCmdNick(server, server->me.nick);
   ircCmdUser(server, server->me.user, server->me.mode, server->me.name);
+  struct timespec t = {0};
+	clock_gettime(CLOCK_MONOTONIC, &t);
+  server->ping = server->pong = t.tv_nsec;
   // more?
+  return 0;
 }
 
 int initSocket(struct sockaddr_in *addr) {
@@ -424,7 +428,8 @@ void ircChannelSendCmd(IrcServer *server, IrcChannel *channel, char *buf) {
     IrcServer s = {0};
     IrcUser u = userTemplate;
     ircServerCreate(&s, args[1], port, u);
-    ircConnect(ircAddServer(&s));
+    if (ircConnect(&s) >= 0)
+			ircAddServer(&s);
     return;
   }
   if (strcasecmp("whois", args[0]) == 0) {
