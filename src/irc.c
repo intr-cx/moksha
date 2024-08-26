@@ -15,6 +15,23 @@
 #include <string.h>
 #include <unistd.h>
 
+#define macroReallocShrink(ptr, len, _mal, type)                               \
+  if (len >= _mal) {                                                           \
+    while (len >= _mal)                                                        \
+      _mal *= 2;                                                               \
+    ptr = (type *)realloc(ptr, sizeof(type) * _mal);                           \
+    if (NULL == ptr)                                                           \
+      exit(-1);                                                                \
+  }
+
+#define macroReallocGrow(ptr, len, _mal, type)                                 \
+  if (len * 4 < _mal) {                                                        \
+    _mal = len;                                                                \
+    ptr = (type *)realloc(ptr, sizeof(type) * _mal);                           \
+    if (NULL == ptr)                                                           \
+      exit(-1);                                                                \
+  }
+
 IrcServer *servers;
 uint lenServers, _mallocServers, curServer;
 pthread_mutex_t mutex;
@@ -109,12 +126,7 @@ void ircServerRemove(IrcServer *server) {
     memcpy(&servers[loc], &servers[loc + 1], sizeof(IrcServer));
   }
   lenServers--;
-  if (lenServers * 4 < _mallocServers) {
-    _mallocServers = lenServers;
-    servers = (IrcServer *)realloc(servers, sizeof(IrcServer) * _mallocServers);
-    if (NULL == servers)
-      exit(-1);
-  }
+  macroReallocShrink(servers, lenServers, _mallocServers, IrcServer);
 }
 
 ulong getServerPing(IrcServer *server) {
@@ -166,7 +178,7 @@ void ircServerCreate(IrcServer *server, char *host, uint16_t port,
   server->port = port;
   server->lenChannels = 0;
   server->_mallocChannels = 1;
-  server->channels = malloc(sizeof(IrcChannel));
+  server->channels = (IrcChannel *)malloc(sizeof(IrcChannel));
   if (NULL == server->channels)
     exit(-1);
   server->me = user;
@@ -181,12 +193,7 @@ void ircServerCreate(IrcServer *server, char *host, uint16_t port,
 IrcServer *ircAddServer(IrcServer *server) {
   servers[lenServers++] = *server;
   curServer = lenServers - 1;
-  if (lenServers >= _mallocServers) {
-    _mallocServers *= 2;
-    servers = realloc(servers, sizeof(IrcServer) * _mallocServers);
-    if (NULL == servers)
-      exit(-1);
-  }
+  macroReallocGrow(servers, lenServers, _mallocServers, IrcServer);
   return &servers[curServer];
 }
 
@@ -220,13 +227,8 @@ IrcChannel *ircServerAddChannel(IrcServer *server, char *name) {
 
   server->channels[server->lenChannels++] = channel;
   server->curChannel = server->lenChannels - 1;
-  if (server->lenChannels >= server->_mallocChannels) {
-    server->_mallocChannels *= 2;
-    server->channels = (IrcChannel *)realloc(
-        server->channels, sizeof(IrcChannel) * server->_mallocChannels);
-    if (NULL == server->channels)
-      exit(-1);
-  }
+  macroReallocGrow(server->channels, server->lenChannels,
+                   server->_mallocChannels, IrcChannel);
   return &server->channels[server->curChannel];
 }
 
@@ -244,24 +246,14 @@ void ircServerAddMsg(IrcChannel *channel, char *ident, char sep, char *msg) {
   m.sep = sep;
 
   channel->msgs[channel->lenMsgs++] = m;
-  if (channel->lenMsgs >= channel->_mallocMsgs) {
-    channel->_mallocMsgs *= 2;
-    channel->msgs =
-        (IrcMsg *)realloc(channel->msgs, sizeof(IrcMsg) * channel->_mallocMsgs);
-    if (NULL == channel->msgs)
-      exit(-1);
-  }
+  macroReallocGrow(channel->msgs, channel->lenMsgs, channel->_mallocMsgs,
+                   IrcMsg);
 }
 
 void ircChannelAddUser(IrcChannel *channel, IrcUser *user) {
   channel->users[channel->lenUsers++] = *user;
-  if (channel->lenUsers >= channel->_mallocUsers) {
-    channel->_mallocUsers *= 2;
-    channel->users =
-        realloc(channel->users, sizeof(IrcUser) * channel->_mallocUsers);
-    if (NULL == channel->users)
-      exit(-1);
-  }
+  macroReallocGrow(channel->users, channel->lenUsers, channel->_mallocUsers,
+                   IrcUser);
 }
 
 void ircServerRemoveChannel(IrcServer *server, char *name) {
@@ -279,13 +271,8 @@ void ircServerRemoveChannel(IrcServer *server, char *name) {
     loc++;
   }
   server->lenChannels--;
-  if (server->lenChannels * 4 < server->_mallocChannels) {
-    server->_mallocChannels = server->lenChannels;
-    server->channels = (IrcChannel *)realloc(
-        server->channels, sizeof(IrcChannel) * server->_mallocChannels);
-    if (NULL == server->channels)
-      exit(-1);
-  }
+  macroReallocShrink(server->channels, server->lenChannels,
+                     server->_mallocChannels, IrcChannel);
 }
 
 void ircChannelRemoveUser(IrcChannel *channel, IrcUser *user) {
@@ -302,13 +289,8 @@ void ircChannelRemoveUser(IrcChannel *channel, IrcUser *user) {
     loc++;
   }
   channel->lenUsers--;
-  if (channel->lenUsers * 4 < channel->_mallocUsers) {
-    channel->_mallocUsers = channel->lenUsers;
-    channel->users = (IrcUser *)realloc(
-        channel->users, sizeof(IrcChannel) * channel->_mallocUsers);
-    if (NULL == channel->users)
-      exit(-1);
-  }
+  macroReallocShrink(channel->users, channel->lenUsers, channel->_mallocUsers,
+                     IrcUser);
 }
 
 void *ircThreadTimer(void *argp) {
@@ -373,8 +355,8 @@ void ircChannelSendMsg(IrcServer *server, IrcChannel *channel, char *message) {
 }
 
 void ircChannelSendCmd(IrcServer *server, IrcChannel *channel, char *buf) {
-	if (NULL == server)
-		return;
+  if (NULL == server)
+    return;
   char args[64][1024] = {0};
   uint c, cc, argc;
   c = cc = argc = 0;
@@ -446,7 +428,7 @@ void ircChannelSendCmd(IrcServer *server, IrcChannel *channel, char *buf) {
     return;
   }
   if (strcasecmp("whois", args[0]) == 0) {
-  	ircCmdSvWhois(server, NULL, args[1]);
-  	return;
-	}
+    ircCmdSvWhois(server, NULL, args[1]);
+    return;
+  }
 }
