@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sys/time.h>
 
-char ircClientCmds[8][ARRAY_LEN] = {
+char ircClientCmds[LEN_ARRAY][8] = {
 	0 // TODO
 };
 

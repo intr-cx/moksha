@@ -10,19 +10,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-char ircCmdNames[ARRAY_LEN][8] = {
+char ircCmdNames[LEN_ARRAY][8] = {
     "JOIN", "PART",   "TOPIC", "PRIVMSG", "PING",
     "PONG", "NOTICE", "QUIT",  "\0",
 };
 
-void (*ircReplyFuncs[ARRAY_LEN])(IrcServer *, char[ARG_LINES][ARG_MSGLEN],
+void (*ircReplyFuncs[LEN_ARRAY])(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG],
                                  size_t) = {
     ircRplJoin, ircRplPart,   ircRplTopic, ircRplPrivmsg, ircRplPing,
     ircRplPong, ircRplNotice, ircRplQuit};
 
-void ircHandleReplyCmd(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircHandleReplyCmd(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                        size_t argc) {
-  for (size_t i = 0; i < ARRAY_LEN; i++) {
+  for (size_t i = 0; i < LEN_ARRAY; i++) {
     if (strcmp(args[1], ircCmdNames[i]) == 0) {
       ircReplyFuncs[i](server, args, argc);
       break;
@@ -30,7 +30,7 @@ void ircHandleReplyCmd(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
   }
 }
 
-void ircHandleReplyNum(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircHandleReplyNum(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                        size_t argc) {
   switch (atoi(args[1])) {
   case RPL_WELCOME:
@@ -70,7 +70,7 @@ void ircHandleReplyNum(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
         break;
       char buf[64] = {0};
       uint c = 0, cc = 0;
-      while (c < ARG_MSGLEN && args[5][c] != 0) {
+      while (c < LEN_PROTMSG && args[5][c] != 0) {
         buf[cc] = args[5][c];
         cc++;
         c++;
@@ -146,7 +146,7 @@ void ircRpl(IrcServer *s, char *buf, size_t len) {
   if (len <= 0) // empty
     return;
   fprintf(outfile, "%s\n", buf);
-  char args[ARG_LINES][ARG_MSGLEN] = {0};
+  char args[LEN_PROTARRAY][LEN_PROTMSG] = {0};
   size_t argc = 0;
   uint c = 1; // skip over the first : or @
 
@@ -164,7 +164,7 @@ void ircRpl(IrcServer *s, char *buf, size_t len) {
     c += t + 1;
   }
 
-  while (c < len && argc < ARG_LINES) {
+  while (c < len && argc < LEN_PROTARRAY) {
     int f = fill(args[argc], buf + c, len - c);
     if (-1 == f)
       break;
@@ -193,7 +193,7 @@ void fillUser(IrcUser *u, char *nick, char *user, char *name, char *mode,
   strlcpy(u->host, host, LEN_NICK);
 }
 
-void ircRplNotice(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircRplNotice(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                   size_t argc) {
   if (argc <= 2)
     return;
@@ -205,12 +205,12 @@ void ircRplNotice(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
   ircServerAddMsg(NULL == c ? &server->channels[0] : c, "server", '!', args[3]);
 }
 
-void ircRplPrivmsg(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircRplPrivmsg(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                    size_t argc) {
   if (argc <= 3)
     return;
   IrcUser u = {0};
-  createUserFromStr(&u, args[0], ARG_MSGLEN);
+  createUserFromStr(&u, args[0], LEN_PROTMSG);
   IrcChannel *c;
   if (strcmp(args[2], server->me.nick) == 0) {
     c = getChannelFromStr(server, u.nick);
@@ -222,10 +222,10 @@ void ircRplPrivmsg(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
   ircServerAddMsg(c, u.nick, ':', args[3]);
 }
 
-void ircRplJoin(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircRplJoin(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
   IrcUser u = {0};
-  createUserFromStr(&u, args[0], ARG_MSGLEN);
+  createUserFromStr(&u, args[0], LEN_PROTMSG);
   if (strcmp(u.user, server->me.user) == 0) {
     ircServerAddChannel(server, args[2]);
   } else {
@@ -235,10 +235,10 @@ void ircRplJoin(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
   }
 }
 
-void ircRplPart(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircRplPart(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
   IrcUser u = {0};
-  createUserFromStr(&u, args[0], ARG_MSGLEN);
+  createUserFromStr(&u, args[0], LEN_PROTMSG);
   if (strcmp(u.user, server->me.user) == 0) {
     ircServerRemoveChannel(server, args[2]);
   } else {
@@ -248,22 +248,22 @@ void ircRplPart(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
   }
 }
 
-void ircRplPing(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircRplPing(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
   ircCmdSvPong(server, args[2], NULL);
 }
 
-void ircRplPong(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircRplPong(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
   struct timespec t = {0};
   clock_gettime(CLOCK_MONOTONIC, &t);
   server->pong = t.tv_nsec;
 }
 
-void ircRplNick(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircRplNick(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
   IrcUser u = {0};
-  createUserFromStr(&u, args[0], ARG_MSGLEN);
+  createUserFromStr(&u, args[0], LEN_PROTMSG);
   if (strcmp(u.user, server->me.user) != 0) {
     strlcpy(server->me.user, args[2], 64);
     return;
@@ -277,7 +277,7 @@ void ircRplNick(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
   }
 }
 
-void ircRplTopic(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircRplTopic(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                  size_t argc) {
   IrcChannel *channel = getChannelFromStr(server, args[3]);
   if (NULL == channel)
@@ -285,10 +285,10 @@ void ircRplTopic(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
   strlcpy(channel->topic, args[4], 256);
 }
 
-void ircRplQuit(IrcServer *server, char args[ARG_LINES][ARG_MSGLEN],
+void ircRplQuit(IrcServer *server, char args[LEN_PROTARRAY][LEN_PROTMSG],
                 size_t argc) {
   IrcUser u = {0};
-  createUserFromStr(&u, args[0], ARG_MSGLEN);
+  createUserFromStr(&u, args[0], LEN_PROTMSG);
   if (strcmp(u.user, server->me.user) != 0) {
     ircDisconnect(server, NULL);
     return;

@@ -4,10 +4,10 @@
 #include "irc.h"
 
 // array of function pointers corresponding to received commands
-extern void (*ircReplyFuncs[ARRAY_LEN])(IrcServer *,
-                                        char[ARG_LINES][ARG_MSGLEN], size_t);
+extern void (*ircReplyFuncs[LEN_ARRAY])(IrcServer *,
+                                        char[LEN_PROTARRAY][LEN_PROTMSG], size_t);
 
-extern char ircCmdNames[ARRAY_LEN][8];
+extern char ircCmdNames[LEN_ARRAY][8];
 
 typedef struct IrcTag {
   char key[16];
@@ -16,18 +16,18 @@ typedef struct IrcTag {
 
 void ircRpl(IrcServer *, char *, size_t);
 
-void ircHandleReplyNum(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
-void ircHandleReplyCmd(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
+void ircHandleReplyNum(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircHandleReplyCmd(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
 
-void ircRplTopic(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
-void ircRplPrivmsg(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
-void ircRplNotice(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
-void ircRplJoin(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
-void ircRplPart(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
-void ircRplPing(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
-void ircRplPong(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
-void ircRplSquery(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
-void ircRplQuit(IrcServer *, char[ARG_LINES][ARG_MSGLEN], size_t argc);
+void ircRplTopic(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircRplPrivmsg(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircRplNotice(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircRplJoin(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircRplPart(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircRplPing(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircRplPong(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircRplSquery(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircRplQuit(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
 
 #endif // INCLUDE_INC_IRC_REPLIES_H_
 // vim: ft=c

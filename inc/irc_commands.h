@@ -3,7 +3,7 @@
 
 #include "irc.h"
 
-extern char ircClientCmds[8][ARRAY_LEN];
+extern char ircClientCmds[LEN_ARRAY][8];
 
 void ircCmd(int sockfd, char *cmd, char *data);
 

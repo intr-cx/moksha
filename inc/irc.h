@@ -12,10 +12,11 @@
 #define LEN_MSG 512
 
 /* most servers limit messages to 512, but you never know */
-#define ARG_MSGLEN 1024
-#define ARG_LINES 16
+#define LEN_PROTMSG 1024
+#define LEN_PROTARRAY 16
 
-#define ARRAY_LEN 128
+#define LEN_ARRAY 128
+#define LEN_IRCCMD 8
 
 
 typedef struct IrcMsg {

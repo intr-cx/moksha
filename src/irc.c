@@ -383,7 +383,7 @@ void ircChannelSendCmd(IrcServer *server, IrcChannel *channel, char *buf) {
 
     args[argc][cc++] = buf[c++];
   }
-  for (size_t i = 0; i < ARRAY_LEN && ircCmdNames[i][0] != 0; i++) {
+  for (size_t i = 0; i < LEN_ARRAY && ircCmdNames[i][0] != 0; i++) {
     if (strcasecmp(args[0], ircCmdNames[i]) == 0) {
       uint j = 0;
       switch (i) {
