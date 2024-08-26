@@ -15,7 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define macroReallocShrink(ptr, len, _mal, type)                               \
+#define macroReallocGrow(ptr, len, _mal, type)                                 \
   if (len >= _mal) {                                                           \
     while (len >= _mal)                                                        \
       _mal *= 2;                                                               \
@@ -24,7 +24,7 @@
       exit(-1);                                                                \
   }
 
-#define macroReallocGrow(ptr, len, _mal, type)                                 \
+#define macroReallocShrink(ptr, len, _mal, type)                               \
   if (len * 4 < _mal) {                                                        \
     _mal = len;                                                                \
     ptr = (type *)realloc(ptr, sizeof(type) * _mal);                           \
