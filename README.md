@@ -20,9 +20,10 @@ The interface is currently quite barren. The following commands can be used:
 | command | argument(s) | description |
 | ------------- | -------------- | -------------- |
 | `/connect` | `[server]` | Connect to an IRC server. |
-| `/quit` |  | Disconnect from the IRC server. |
+| `/disconnect` | `[server]` | Disconnect from an IRC server. |
 | `/join` | `[channel]` | Join a channel. |
 | `/part` | `[channel]` | Leave a channel. |
+| `/quit` |  | Exit Moksha. |
 
 
 # Planned features

@@ -9,6 +9,7 @@
 char input[512];
 uint cursor = 0;
 WINDOW *w;
+bool running = true;
 
 void tuiDrawList(uint *sep, uint height);
 void tuiDrawChannel(IrcServer *, IrcChannel *, uint sep, uint width,
@@ -30,7 +31,7 @@ void tuiInit(void) {
 
 void tuiLoop(void) {
   int c;
-  while ((c = getch()) != 0) {
+  while (running && (c = getch()) != 0) {
     pthread_mutex_lock(&mutex);
     move(0, 0);
     fprintf(outfile, "%d\n", c);

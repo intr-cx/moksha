@@ -388,9 +388,9 @@ void ircChannelSendCmd(IrcServer *server, IrcChannel *channel, char *buf) {
 
     args[argc][cc++] = buf[c++];
   }
+  uint j = 0;
   for (size_t i = 0; i < LEN_ARRAY && ircCmdNames[i][0] != 0; i++) {
     if (strcasecmp(args[0], ircCmdNames[i]) == 0) {
-      uint j = 0;
       switch (i) {
       case 0: { // JOIN
         if (argc > 0)
@@ -413,16 +413,24 @@ void ircChannelSendCmd(IrcServer *server, IrcChannel *channel, char *buf) {
         return;
       }
       case 7: { // QUIT
-        if (argc > 1) {
-          while (buf[j] != 0 && buf[j++] != ' ')
-            ;
+        for (uint u = 0; u < lenServers; u++) {
+          ircDisconnect(&servers[u], "Quitting");
         }
-        ircDisconnect(server, argc > 1 ? &buf[j] : NULL);
+        running = false;
         return;
       }
       }
       break;
     }
+  }
+
+  if (strcasecmp("disconnect", args[0]) == 0) {
+    if (argc > 1) {
+      while (buf[j] != 0 && buf[j++] != ' ')
+        ;
+    }
+    ircDisconnect(server, argc > 1 ? &buf[j] : NULL);
+    return;
   }
   if (strcasecmp("connect", args[0]) == 0) {
     size_t port = argc > 1 ? atoi(args[2]) : 6667;

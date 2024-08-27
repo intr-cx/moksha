@@ -3,6 +3,9 @@
 
 #include "irc.h"
 #include <ncurses.h>
+#include <stdbool.h>
+
+extern bool running;
 
 void tuiInit(void);
 void tuiLoop(void);
