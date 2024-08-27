@@ -129,10 +129,6 @@ void ircServerRemove(IrcServer *server) {
   macroReallocShrink(servers, lenServers, _mallocServers, IrcServer);
 }
 
-ulong getServerPing(IrcServer *server) {
-  return round(1E-4 * (server->pong - server->ping));
-}
-
 int ircConnect(IrcServer *server) {
   server->sockfd = initSocket(&server->addr);
   if (server->sockfd < 0)
@@ -146,7 +142,7 @@ int ircConnect(IrcServer *server) {
   ircCmdNick(server, server->me.nick);
   ircCmdUser(server, server->me.user, server->me.mode, server->me.name);
   struct timespec t = {0};
-	clock_gettime(CLOCK_MONOTONIC, &t);
+  clock_gettime(CLOCK_MONOTONIC, &t);
   server->ping = server->pong = t.tv_nsec;
   // more?
   return 0;
@@ -314,19 +310,23 @@ void *ircThreadTimer(void *argp) {
 void *ircThreadRecv(void *argp) {
   IrcServer *server = (IrcServer *)argp;
   while (server->sockfd >= 0) {
-    const size_t bufsize = 2048;
-    char buf[bufsize];
-    size_t res = recv(server->sockfd, buf, bufsize - 1, 0);
+    char buf[LEN_RECV] = {0};
+    size_t res = recv(server->sockfd, buf, LEN_RECV - 1, 0);
     if (res <= 0) {
-      continue;
+      ircServerAddMsg(&server->channels[0], "[moksha]", '!',
+                      "Connection dropped");
+      close(server->sockfd);
+      server->sockfd = -1;
+      break;
     }
     buf[res] = 0;
-    char linebuf[bufsize];
+    char linebuf[LEN_RECV];
     uint c, cc;
     c = cc = 0;
-    while (c < bufsize - 1 && buf[c] != 0) {
+    while (c < LEN_RECV - 1 && buf[c] != 0) {
       if (buf[c] == '\r' && buf[c + 1] == '\n') {
         linebuf[cc] = 0;
+        fprintf(outfile, "%s\n", linebuf);
         ircRpl(server, linebuf, cc);
         c += 2;
         cc = 0;
@@ -339,6 +339,7 @@ void *ircThreadRecv(void *argp) {
   }
   return NULL;
 }
+
 void ircChannelSendMsg(IrcServer *server, IrcChannel *channel, char *message) {
   if (NULL == server || NULL == channel || message[0] == '/') {
     ircChannelSendCmd(server, channel, &message[message[0] == '/' ? 1 : 0]);
@@ -354,7 +355,7 @@ void ircChannelSendMsg(IrcServer *server, IrcChannel *channel, char *message) {
     IrcServer *s = &servers[curServer];
     IrcChannel *c = &s->channels[s->curChannel];
     if (s->host == server->host && c->name == channel->name)
-			draw();
+      draw();
   }
 }
 
@@ -429,7 +430,7 @@ void ircChannelSendCmd(IrcServer *server, IrcChannel *channel, char *buf) {
     IrcUser u = userTemplate;
     ircServerCreate(&s, args[1], port, u);
     if (ircConnect(&s) >= 0)
-			ircAddServer(&s);
+      ircAddServer(&s);
     return;
   }
   if (strcasecmp("whois", args[0]) == 0) {

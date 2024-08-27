@@ -4,8 +4,8 @@
 #include <netinet/ip.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define LEN_MODE 8
 #define LEN_NICK 64
@@ -15,14 +15,15 @@
 #define LEN_PROTMSG 1024
 #define LEN_PROTARRAY 16
 
+#define LEN_RECV 4092
+
 #define LEN_ARRAY 128
 #define LEN_IRCCMD 8
 
-
 typedef struct IrcMsg {
-	char msg[LEN_MSG];
-	char sep;
-	char ident[LEN_NICK];
+  char msg[LEN_MSG];
+  char sep;
+  char ident[LEN_NICK];
 } IrcMsg;
 
 typedef struct IrcUser {
@@ -34,14 +35,14 @@ typedef struct IrcUser {
 } IrcUser;
 
 typedef struct IrcChannel {
-	char name[LEN_NICK];
-	char mode[LEN_MODE];
-	char topic[LEN_MSG];
-	IrcMsg *msgs;
-	uint lenMsgs, _mallocMsgs;
-	IrcUser *users;
-	uint lenUsers, _mallocUsers;
-	uint8_t writeable;
+  char name[LEN_NICK];
+  char mode[LEN_MODE];
+  char topic[LEN_MSG];
+  IrcMsg *msgs;
+  uint lenMsgs, _mallocMsgs;
+  IrcUser *users;
+  uint lenUsers, _mallocUsers;
+  uint8_t writeable;
 } IrcChannel;
 
 typedef struct IrcServer {
@@ -65,11 +66,9 @@ extern IrcUser userTemplate;
 
 extern FILE *outfile;
 
-int createUserFromStr(IrcUser *, char *, size_t );
+int createUserFromStr(IrcUser *, char *, size_t);
 IrcChannel *getChannelFromStr(IrcServer *, char *);
 IrcUser *getUserFromStr(IrcChannel *, char *);
-
-ulong getServerPing(IrcServer *);
 
 int ircConnect(IrcServer *);
 void ircDisconnect(IrcServer *, char *reason);
@@ -87,10 +86,10 @@ void ircServerFree(IrcServer *);
 void ircChannelFree(IrcChannel *);
 
 IrcChannel *ircServerAddChannel(IrcServer *, char *name);
-void ircChannelAddNick(IrcChannel *,  char *name);
+void ircChannelAddNick(IrcChannel *, char *name);
 void ircChannelAddUser(IrcChannel *, IrcUser *);
 void ircServerRemoveChannel(IrcServer *, char *name);
-void ircChannelRemoveNick(IrcChannel *,  char *name);
+void ircChannelRemoveNick(IrcChannel *, char *name);
 void ircChannelRemoveUser(IrcChannel *, IrcUser *);
 
 void ircServerAddMsg(IrcChannel *, char *ident, char sep, char *msg);
