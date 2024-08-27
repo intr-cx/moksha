@@ -28,6 +28,7 @@ void ircRplPing(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
 void ircRplPong(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
 void ircRplSquery(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
 void ircRplQuit(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
+void ircRplError(IrcServer *, char[LEN_PROTARRAY][LEN_PROTMSG], size_t argc);
 
 #endif // INCLUDE_INC_IRC_REPLIES_H_
 // vim: ft=c
