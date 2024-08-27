@@ -44,6 +44,6 @@ void strTrim(uint *left, uint *right, char *str) {
     ;
   str[r + 1] = 0;
 
-	*left = l;
-	*right = r;
+  *left = l;
+  *right = r;
 }

@@ -1,11 +1,11 @@
-#include "irc_commands.h"
 #include "irc.h"
+#include "irc_commands.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
 
 char ircClientCmds[LEN_ARRAY][8] = {
-	0 // TODO
+    0 // TODO
 };
 
 void ircCmd(int sockfd, char *cmd, char *data) {
@@ -218,7 +218,7 @@ void ircCmdSvPing(IrcServer *server, char *target, char *target2) {
     ircCmd(server->sockfd, "PING", data);
   }
   struct timespec t = {0};
-	clock_gettime(CLOCK_MONOTONIC, &t);
+  clock_gettime(CLOCK_MONOTONIC, &t);
   server->ping = t.tv_nsec;
 }
 
