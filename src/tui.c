@@ -1,5 +1,5 @@
-#include "tui.h"
 #include "irc.h"
+#include "tui.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -10,7 +10,7 @@ char input[512];
 uint cursor = 0;
 WINDOW *w;
 
-void tuiDrawList(uint sep, uint height);
+void tuiDrawList(uint *sep, uint height);
 void tuiDrawChannel(IrcServer *, IrcChannel *, uint sep, uint width,
                     uint height);
 void tuiDrawCmd(uint width, uint height);
@@ -19,6 +19,7 @@ void tuiInit(void) {
   w = initscr();
   noecho();
   cbreak();
+  nonl();
   keypad(w, true);
   start_color();
   uint x, y;
@@ -32,9 +33,7 @@ void tuiLoop(void) {
   while ((c = getch()) != 0) {
     pthread_mutex_lock(&mutex);
     move(0, 0);
-    char wht[8];
-    snprintf(wht, 8, "%d", c);
-    addstr(wht);
+    fprintf(outfile, "%d\n", c);
     switch (c) {
     case KEY_PPAGE: {
       if (NULL != servers) {
@@ -97,44 +96,47 @@ void tuiLoop(void) {
 }
 
 void draw(void) {
-  uint sep = 16;
+  uint sep = 8;
 
   uint width, height;
   width = height = 0;
   getmaxyx(w, height, width);
   clear();
-  tuiDrawList(sep, height);
+  tuiDrawList(&sep, height);
 
   if (NULL != servers && NULL != servers[curServer].channels) {
     tuiDrawChannel(&servers[curServer],
                    &servers[curServer].channels[servers[curServer].curChannel],
                    sep, width, height);
   }
-	tuiDrawCmd(width, height);
+  tuiDrawCmd(width, height);
 
   refresh();
 }
 
-void tuiDrawList(uint sep, uint height) {
+void tuiDrawList(uint *sep, uint height) {
   uint c = 0;
+  uint sl;
   for (uint i = 0; i < lenServers && i < height; i++) {
-    if (curServer == i) {
-      move(i + c, 0);
-      addch('>');
-    }
     IrcServer *s = &servers[i];
-    for (uint k = 0; k < sep && s->host[k] != 0; k++) {
+    sl = strlen(s->host);
+    if (*sep < sl + 2)
+      *sep = sl + 2;
+    for (uint k = 0; k < *sep && s->host[k] != 0; k++) {
       move(i + c, k + 1);
       addch(s->host[k]);
     }
     for (uint j = 0; j < s->lenChannels && j < height; j++) {
       IrcChannel *ch = &s->channels[j];
+      sl = strlen(ch->name);
+      if (*sep < sl + 3)
+        *sep = sl + 3;
       if (curServer == i && s->curChannel == j) {
-        move(i + j + c + 1, 0);
+        move(i + j + c + 2, 0);
         addch('*');
       }
-      for (uint k = 0; k < sep && ch->name[k] != 0; k++) {
-        move(i + j + c + 1, k + 1);
+      for (uint k = 0; k < *sep && ch->name[k] != 0; k++) {
+        move(i + j + c + 2, k + 1);
         addch(ch->name[k]);
       }
     }
